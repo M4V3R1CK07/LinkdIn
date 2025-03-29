@@ -1,4 +1,4 @@
-import { signOut, useSession } from "next-auth/react";
+import { getSession, signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -50,4 +50,23 @@ export default function Index() {
       </main>
     </div>
   );
+}
+
+export async function getServerSideProps(context) {
+  // Check if the user is authenticated on the server...
+  const session = await getSession(context);
+  if (!session) {
+    return {
+      redirect: {
+        permanent: false,
+        destination: "/home",
+      },
+    };
+  }
+
+  return {
+    props: {
+      session,
+    },
+  };
 }
