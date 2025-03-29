@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [""],
+    domains: ["rb.gy"],
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; img-src * data: blob:;",
   },
 };
 

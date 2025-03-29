@@ -40,6 +40,7 @@ function Home({ providers }) {
             <HeaderLink Icon={BusinessCenterIcon} text="Jobs" />
             <HeaderLink Icon={ExtensionIcon} text="Games" />
           </div>
+
           <div className="space-x-4 px-2">
             <button
               className="font-semibold text-gray-700 hover:bg-gray-100 px-6 py-3 rounded-full hover:text-gray-800"
@@ -47,6 +48,7 @@ function Home({ providers }) {
             >
               Join now
             </button>
+
             {providers &&
               Object.values(providers).map((provider) => (
                 <button
