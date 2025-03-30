@@ -18,7 +18,7 @@ function Home({ providers }) {
     >
       <Head>
         <title>LinkdIn: Log In or Sign Up</title>
-        <link rel="icon" href="/logos/LinkdIn_Icon.png"></link>
+        <link rel="icon" href="/logos/LinkdIn_Icon.png" />
       </Head>
 
       {/* Header Section */}

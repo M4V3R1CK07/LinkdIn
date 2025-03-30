@@ -23,3 +23,7 @@ body {
 .sidebarLink {
   @apply text-[13px] font-medium hover:underline cursor-pointer px-2.5;
 }
+
+.inputButton {
+  @apply flex items-center space-x-2 font-medium cursor-pointer text-sm hover:bg-gray-100;
+}

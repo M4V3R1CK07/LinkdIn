@@ -1,7 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ["rb.gy"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "rb.gy",
+      },
+    ],
     dangerouslyAllowSVG: true,
     contentSecurityPolicy: "default-src 'self'; img-src * data: blob:;",
   },

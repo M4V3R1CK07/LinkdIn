@@ -5,6 +5,11 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import Head from "next/head";
+import Feed from "@/components/Feed";
+import { useRecoilState } from "recoil";
+import { modalState, modalTypeState } from "@/atoms/modalAtom";
+import Modal from "@/components/Modal";
+import { AnimatePresence } from "framer-motion";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,15 +22,18 @@ const geistMono = Geist_Mono({
 });
 
 export default function Index() {
-  //   const { data: session, status } = useSession();
-  //   const router = useRouter();
+  const [modalOpen, setModalOpen] = useRecoilState(modalState);
+  const [modalType, setModalType] = useRecoilState(modalTypeState);
 
-  //   useEffect(() => {
-  //     // If user is not authenticated, redirect to home page
-  //     if (status === "unauthenticated") {
-  //       router.push("/home");
-  //     }
-  //   }, [status, router]);
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    // If user is not authenticated, redirect to home page
+    if (status === "unauthenticated") {
+      router.push("/home");
+    }
+  }, [status, router]);
 
   //   // Show loading state while checking authentication
   //   if (status === "loading") {
@@ -45,6 +53,12 @@ export default function Index() {
       <main className="flex justify-center gap-x-5 px-4 sm:px-12">
         <div className="flex flex-col md:flex-row gap-5">
           <Sidebar />
+          <Feed />
+          <AnimatePresence>
+            {modalOpen && (
+              <Modal handleClose={() => setModalOpen(false)} type={modalType} />
+            )}
+          </AnimatePresence>
           <button onClick={signOut}>Sign Out</button>
         </div>
       </main>

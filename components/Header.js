@@ -13,6 +13,7 @@ import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
+import { useSession } from "next-auth/react";
 
 const spring = {
   type: "spring",
@@ -24,6 +25,7 @@ function Header() {
   const [mounted, setMounted] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const { data: session } = useSession();
 
   useEffect(() => setMounted(true), []);
 
@@ -88,7 +90,7 @@ function Header() {
           <HeaderLink Icon={BusinessCenterIcon} text="Jobs" feed hidden />
           <HeaderLink Icon={ChatIcon} text="Messaging" feed />
           <HeaderLink Icon={NotificationsIcon} text="Notifications" feed />
-          <HeaderLink Icon={Avatar} text="Me" feed avatar hidden />
+          <HeaderLink text="Me" feed avatar hidden src={session?.user?.image} />
           <HeaderLink Icon={AppsOutlinedIcon} text="For Business" feed hidden />
 
           {mounted && (
