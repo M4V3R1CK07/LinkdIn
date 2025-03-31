@@ -26,33 +26,70 @@ function Header() {
   const [mounted, setMounted] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [dropdownVisible, setDropdownVisible] = useState(false); // for avatar dropdown
+  // States for search functionality
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
   const { data: session } = useSession();
-  const dropdownRef = useRef(null);
+  const avatarDropdownRef = useRef(null);
+  const searchRef = useRef(null);
 
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  // Collapse the dropdown when clicking outside its container
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
+      if (
+        avatarDropdownRef.current &&
+        !avatarDropdownRef.current.contains(event.target)
+      ) {
+        setDropdownVisible(false);
+      }
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        // Optionally clear search suggestions here if needed
+        // setSearchResults([]);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Add this useEffect to close the dropdown when session changes (e.g., on sign out)
   useEffect(() => {
     if (!session) {
-      setShowDropdown(false);
+      setDropdownVisible(false);
     }
   }, [session]);
+
+  // Debounce search query and fetch results
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setSearchResults([]);
+      return;
+    }
+    setSearchLoading(true);
+    const timer = setTimeout(() => {
+      fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          setSearchResults(data.users || []);
+          setSearchLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching search results:", error);
+          setSearchLoading(false);
+        });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   return (
     <>
       {isInputFocused && (
+        // Optional overlay when search input is active
         <div
           className="fixed top-0 left-0 w-full h-full bg-black/50 backdrop-blur-sm z-30"
           onClick={() => setIsInputFocused(false)}
@@ -60,8 +97,11 @@ function Header() {
       )}
 
       <header className="sticky top-0 z-40 bg-white dark:bg-[#1D2226] flex items-center justify-around py-0.5 px-5 focus-within:shadow-lg">
-        {/* Left */}
-        <div className="flex items-center space-x-2 w-full max-w-xs scale-90">
+        {/* Left Side (Logo and Search) */}
+        <div
+          className="flex items-center space-x-2 w-full max-w-xs scale-90 relative"
+          ref={searchRef}
+        >
           {mounted && (
             <>
               {resolvedTheme === "dark" ? (
@@ -82,6 +122,7 @@ function Header() {
             </>
           )}
 
+          {/* Search Container */}
           <div
             className={`flex items-center space-x-1 py-2.5 px-4 rounded w-full border transition-colors ${
               resolvedTheme === "dark"
@@ -93,18 +134,55 @@ function Header() {
             <input
               type="text"
               placeholder="Search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setIsInputFocused(true)}
               className={`hidden md:inline-flex bg-transparent text-sm focus:outline-none flex-grow transition-colors ${
                 resolvedTheme === "dark"
                   ? "placeholder-gray-300 text-white"
                   : "placeholder-gray-600 text-black"
               }`}
-              onFocus={() => setIsInputFocused(true)}
-              onBlur={() => setIsInputFocused(false)}
             />
           </div>
+
+          {/* Search Suggestions Dropdown */}
+          {searchQuery && searchResults.length > 0 && (
+            <div className="absolute top-full left-0 right-0 bg-white dark:bg-[#1D2226] shadow rounded mt-1 z-50">
+              {searchLoading && (
+                <div className="px-4 py-2 text-gray-600 dark:text-gray-300">
+                  Loading...
+                </div>
+              )}
+              {searchResults.map((user) => (
+                <Link href={`/profile/${user._id}`} key={user._id}>
+                  <a
+                    className="flex items-center px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setSearchResults([]);
+                    }}
+                  >
+                    <img
+                      src={user.image || "/default-user.png"}
+                      alt={user.name}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                    <div className="ml-3">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        {user.name}
+                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-300">
+                        {user.title || ""}
+                      </p>
+                    </div>
+                  </a>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Right */}
+        {/* Right Side (Other Header Links) */}
         <div className="flex items-center space-x-6 scale-95">
           <HeaderLink Icon={HomeRoundedIcon} text="Home" feed href="/" />
           <HeaderLink
@@ -129,9 +207,9 @@ function Header() {
           />
 
           {/* Avatar with Dropdown */}
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative" ref={avatarDropdownRef}>
             <div
-              onClick={() => setShowDropdown((prev) => !prev)}
+              onClick={() => setDropdownVisible((prev) => !prev)}
               className="cursor-pointer flex flex-col items-center"
             >
               <Avatar src={session?.user?.image} className="!h-7 !w-7" />
@@ -139,7 +217,7 @@ function Header() {
                 Me &#11167;
               </h4>
             </div>
-            {showDropdown && session && (
+            {dropdownVisible && session && (
               <div className="absolute top-full right-0 mt-2 w-48 py-2 bg-white dark:bg-[#1D2226] rounded-lg shadow-lg z-50">
                 {session.user?.id ? (
                   <Link href={`/profile/${session.user.id}`}>
@@ -159,7 +237,7 @@ function Header() {
                 </Link>
                 <button
                   onClick={() => {
-                    setShowDropdown(false);
+                    setDropdownVisible(false);
                     signOut();
                   }}
                   className="w-full text-left block px-4 py-2 text-gray-800 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
