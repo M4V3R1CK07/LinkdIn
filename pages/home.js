@@ -75,15 +75,25 @@ function Home({ providers }) {
             Welcome to your professional community
           </h1>
           <div className="space-y-4">
-            <div className="intent">
+            {/* Each Intent with a signIn handler */}
+            <div
+              className="intent cursor-pointer"
+              onClick={() => signIn("google", { callbackUrl: "/" })}
+            >
               <h2 className="text-xl">Search for a job</h2>
               <ArrowForwardIosRoundedIcon className="text-gray-700" />
             </div>
-            <div className="intent">
+            <div
+              className="intent cursor-pointer"
+              onClick={() => signIn("google", { callbackUrl: "/" })}
+            >
               <h2 className="text-xl">Find a person you know</h2>
               <ArrowForwardIosRoundedIcon className="text-gray-700" />
             </div>
-            <div className="intent">
+            <div
+              className="intent cursor-pointer"
+              onClick={() => signIn("google", { callbackUrl: "/" })}
+            >
               <h2 className="text-xl">Learn a new skill</h2>
               <ArrowForwardIosRoundedIcon className="text-gray-700" />
             </div>
