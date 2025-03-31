@@ -14,3 +14,8 @@ export const useSSRPostsState = atom({
   key: "useSSRPostsState",
   default: true,
 });
+
+export const selectedMediaState = atom({
+  key: "selectedMediaState",
+  default: null,
+});

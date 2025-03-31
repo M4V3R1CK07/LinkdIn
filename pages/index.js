@@ -80,7 +80,8 @@ export async function getServerSideProps(context) {
       posts: posts.map((post) => ({
         _id: post._id.toString(),
         input: post.input,
-        photoUrl: post.photoUrl,
+        photoUrl: post.photoUrl ?? null, // ✅ Convert `undefined` to `null`
+        videoUrl: post.videoUrl ?? null, // ✅ Do the same for videoUrl if needed
         username: post.username,
         email: post.email,
         userImg: post.userImg,

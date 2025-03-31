@@ -9,6 +9,7 @@ import OndemandVideoIcon from "@mui/icons-material/OndemandVideo";
 import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
 import ExtensionIcon from "@mui/icons-material/Extension";
 import { getProviders, signIn } from "next-auth/react";
+import ArrowForwardIosRoundedIcon from "@mui/icons-material/ArrowForwardIosRounded";
 
 function Home({ providers }) {
   return (
@@ -73,6 +74,20 @@ function Home({ providers }) {
           <h1 className="text-gray-700 text-3xl md:text-5xl max-w-xl !leading-snug pl-4 xl:pl-0">
             Welcome to your professional community
           </h1>
+          <div className="space-y-4">
+            <div className="intent">
+              <h2 className="text-xl">Search for a job</h2>
+              <ArrowForwardIosRoundedIcon className="text-gray-700" />
+            </div>
+            <div className="intent">
+              <h2 className="text-xl">Find a person you know</h2>
+              <ArrowForwardIosRoundedIcon className="text-gray-700" />
+            </div>
+            <div className="intent">
+              <h2 className="text-xl">Learn a new skill</h2>
+              <ArrowForwardIosRoundedIcon className="text-gray-700" />
+            </div>
+          </div>
         </div>
 
         {/* Right Section - Image */}

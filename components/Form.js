@@ -2,14 +2,14 @@ import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { useRecoilState } from "recoil";
 import { modalState } from "../atoms/modalAtom";
-import { handlePostState } from "../atoms/postAtom";
+import { handlePostState, selectedMediaState } from "../atoms/postAtom";
 
 function Form() {
   const [input, setInput] = useState("");
-  const [photoUrl, setPhotoUrl] = useState("");
   const { data: session } = useSession();
   const [modalOpen, setModalOpen] = useRecoilState(modalState);
   const [handlePost, setHandlePost] = useRecoilState(handlePostState);
+  const [selectedMedia, setSelectedMedia] = useRecoilState(selectedMediaState);
 
   const uploadPost = async (e) => {
     e.preventDefault();
@@ -18,7 +18,8 @@ function Form() {
       method: "POST",
       body: JSON.stringify({
         input: input,
-        photoUrl: photoUrl,
+        photoUrl: selectedMedia?.url || null, // Use selectedMedia.url instead of photoUrl
+        mediaType: selectedMedia?.type || null, // Add mediaType to differentiate image/video
         username: session.user.name,
         email: session.user.email,
         userImg: session.user.image,
@@ -34,6 +35,8 @@ function Form() {
 
     setHandlePost(true);
     setModalOpen(false);
+    setInput(""); // Clear input after posting
+    setSelectedMedia(null);
   };
 
   return (
@@ -46,19 +49,38 @@ function Form() {
         onChange={(e) => setInput(e.target.value)}
       />
 
-      <input
-        type="text"
-        placeholder="Add a photo URL (optional)"
-        className="bg-transparent focus:outline-none truncate max-w-xs md:max-w-sm dark:placeholder-white/75"
-        value={photoUrl}
-        onChange={(e) => setPhotoUrl(e.target.value)}
-      />
+      {selectedMedia?.url && (
+        <div className="relative w-full flex justify-center">
+          {selectedMedia.type === "image" ? (
+            <img
+              src={selectedMedia.url}
+              alt="Selected"
+              className="max-w-full max-h-40 rounded-lg"
+            />
+          ) : (
+            <video
+              src={selectedMedia.url}
+              controls
+              className="max-w-full max-h-40 rounded-lg"
+            />
+          )}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              setSelectedMedia(null);
+            }}
+            className="absolute top-0 right-0 bg-gray-800 rounded-full p-1 text-white text-xs"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <button
         className="absolute bottom-0 right-0 font-medium bg-blue-400 hover:bg-blue-500 disabled:text-black/40 disabled:bg-white/75 disabled:cursor-not-allowed text-white rounded-full px-3.5 py-1"
         type="submit"
         onClick={uploadPost}
-        disabled={!input.trim() && !photoUrl.trim()}
+        disabled={!input.trim() && !selectedMedia?.url}
       >
         Post
       </button>

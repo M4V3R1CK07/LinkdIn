@@ -77,7 +77,7 @@ function Post({ post, modalPost }) {
         </div>
       )}
 
-      {post.photoUrl && !modalPost && (
+      {post.photoUrl ? (
         <Image
           src={post.photoUrl}
           alt="Post Image"
@@ -90,7 +90,7 @@ function Post({ post, modalPost }) {
             setPostState(post);
           }}
         />
-      )}
+      ) : null}
 
       <div className="flex justify-evenly items-center dark:border-t border-gray-600/80 mx-2.5 pt-2 text-black/60 dark:text-white/75">
         {modalPost ? (
