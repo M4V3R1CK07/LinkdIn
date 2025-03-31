@@ -1,3 +1,4 @@
+// /components/Post.js
 import { Avatar, IconButton } from "@mui/material";
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
@@ -14,6 +15,16 @@ import TimeAgo from "timeago-react";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 
+// Helper function: generate a temporary 24-character hexadecimal ID
+function generateTempObjectId() {
+  const hexChars = "0123456789abcdef";
+  let objectId = "";
+  for (let i = 0; i < 24; i++) {
+    objectId += hexChars[Math.floor(Math.random() * 16)];
+  }
+  return objectId;
+}
+
 function Post({ post, modalPost }) {
   const { data: session } = useSession();
   const [modalOpen, setModalOpen] = useRecoilState(modalState);
@@ -22,44 +33,32 @@ function Post({ post, modalPost }) {
   const [showInput, setShowInput] = useState(false);
   const [handlePost, setHandlePost] = useRecoilState(handlePostState);
 
-  // Debug post data
-  useEffect(() => {
-    console.log("Post received:", post);
-    console.log("Post likes array:", post.likes);
-  }, [post]);
-
-  // Initialize currentPost state from the post prop
+  // Local state for current post data (which includes likes and comments)
   const [currentPost, setCurrentPost] = useState(post);
-
-  // Keep currentPost in sync with post prop
   useEffect(() => {
     setCurrentPost(post);
   }, [post]);
 
-  // Handle liked state separately from currentPost to ensure it's reactive
+  // Liked state management
   const [liked, setLiked] = useState(false);
-
-  // Update liked state whenever the post or session changes
   useEffect(() => {
     if (session?.user?.email && currentPost?.likes) {
       const isLiked = currentPost.likes.includes(session.user.email);
-      console.log(
-        "Checking if post is liked:",
-        isLiked,
-        session.user.email,
-        currentPost.likes
-      );
       setLiked(isLiked);
     } else {
       setLiked(false);
     }
   }, [currentPost, session]);
 
+  // New state for showing the comment input box and the comment text
+  const [showComment, setShowComment] = useState(false);
+  const [commentText, setCommentText] = useState("");
+
   const truncate = (string, n) =>
     string?.length > n ? string.substr(0, n - 1) + "...see more" : string;
 
   const deletePost = async () => {
-    const response = await fetch(`/api/posts/${post._id}`, {
+    await fetch(`/api/posts/${post._id}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
     });
@@ -67,45 +66,26 @@ function Post({ post, modalPost }) {
     setModalOpen(false);
   };
 
-  // Toggle like function that updates both local state and the backend
+  // Toggle like functionality (same as before)
   const toggleLike = async () => {
     if (!session) return;
 
     const newLikeStatus = !liked;
-    console.log("Toggling like to:", newLikeStatus);
-
-    // Optimistic UI update
+    // Optimistic update:
     setLiked(newLikeStatus);
-
-    // Create a copy of the current likes array or initialize it if undefined
     const updatedLikes = [...(currentPost.likes || [])];
-
     if (newLikeStatus) {
-      // Add user email if not already present
       if (!updatedLikes.includes(session.user.email)) {
         updatedLikes.push(session.user.email);
       }
     } else {
-      // Remove user email
       const index = updatedLikes.indexOf(session.user.email);
       if (index > -1) {
         updatedLikes.splice(index, 1);
       }
     }
-
-    // Update local post state immediately
-    setCurrentPost((prev) => ({
-      ...prev,
-      likes: updatedLikes,
-    }));
-
+    setCurrentPost((prev) => ({ ...prev, likes: updatedLikes }));
     try {
-      console.log("Sending like update to server:", {
-        postId: post._id,
-        userEmail: session.user.email,
-        like: newLikeStatus,
-      });
-
       const response = await fetch(`/api/posts/like`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -115,30 +95,102 @@ function Post({ post, modalPost }) {
           like: newLikeStatus,
         }),
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log("Server response:", data);
-
-        // Update the post with server response
-        setCurrentPost((prev) => ({
-          ...prev,
-          likes: data.likes,
-        }));
-
-        // Force refresh of post data to ensure it's saved globally
-        setHandlePost(true);
-      } else {
-        console.error("API error:", await response.text());
-        // Revert optimistic update on error
-        setLiked(!newLikeStatus);
+      if (!response.ok) {
+        setLiked((prev) => !prev);
         setCurrentPost(post);
+      } else {
+        const data = await response.json();
+        setCurrentPost((prev) => ({ ...prev, likes: data.likes }));
+        setHandlePost(true);
       }
     } catch (error) {
       console.error("Error updating like:", error);
-      // Revert optimistic update on error
-      setLiked(!newLikeStatus);
+      setLiked((prev) => !prev);
       setCurrentPost(post);
+    }
+  };
+
+  // Submit comment functionality with temporary _id generation
+  const submitComment = async (e) => {
+    e.preventDefault();
+    if (!commentText.trim() || !session) return;
+
+    // Create comment object with a temporary _id
+    const newComment = {
+      _id: generateTempObjectId(),
+      text: commentText,
+      username: session.user.name,
+      userImg: session.user.image,
+      email: session.user.email,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Optimistic update: add new comment to currentPost.comments immediately
+    setCurrentPost((prev) => ({
+      ...prev,
+      comments: prev.comments ? [newComment, ...prev.comments] : [newComment],
+    }));
+
+    try {
+      const response = await fetch(`/api/posts/comment`, {
+        method: "PUT", // Adding a comment via PUT
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postId: post._id,
+          comment: newComment,
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Update comments from server response (which should now include a proper _id if the DB assigns one)
+        setCurrentPost((prev) => ({ ...prev, comments: data.comments }));
+        setCommentText("");
+      } else {
+        console.error("Error posting comment:", await response.text());
+      }
+    } catch (error) {
+      console.error("Error posting comment:", error);
+    }
+  };
+
+  // Delete comment functionality
+  const deleteComment = async (commentId) => {
+    if (!session) return;
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this comment?"
+    );
+    if (!confirmed) return;
+
+    // Log values to ensure they exist
+    console.log("Deleting comment with ID:", commentId);
+    console.log("From post with ID:", currentPost._id);
+
+    try {
+      const res = await fetch("/api/posts/comment", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postId: currentPost._id,
+          commentId: commentId,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setCurrentPost((prev) => ({ ...prev, comments: data.comments }));
+      } else {
+        const errorText = await res.text();
+        console.error("Failed to delete comment:", errorText);
+        // Parse and log the error if it's JSON
+        try {
+          const errorJson = JSON.parse(errorText);
+          console.error("Error details:", errorJson);
+        } catch (e) {
+          // If it's not JSON, the error is already logged above
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting comment:", error);
     }
   };
 
@@ -148,6 +200,7 @@ function Post({ post, modalPost }) {
         modalPost ? "rounded-r-lg" : "rounded-lg"
       } space-y-2 py-2.5 border border-gray-300 dark:border-none`}
     >
+      {/* Post Header */}
       <div className="flex items-center px-2.5 cursor-pointer">
         <Avatar
           src={currentPost.userImg}
@@ -176,6 +229,7 @@ function Post({ post, modalPost }) {
         )}
       </div>
 
+      {/* Post Content */}
       {currentPost.input && (
         <div className="px-2.5 break-all md:break-normal">
           {modalPost || showInput ? (
@@ -216,26 +270,26 @@ function Post({ post, modalPost }) {
         />
       ) : null}
 
+      {/* Action Buttons */}
       <div className="flex justify-evenly items-center dark:border-t border-gray-600/80 mx-2.5 pt-2 text-black/60 dark:text-white/75">
-        {modalPost ? (
-          <button className="postButton">
-            <CommentOutlinedIcon />
-            <h4>Comment</h4>
-          </button>
-        ) : (
-          <button
-            className={`postButton ${liked && "text-blue-500"}`}
-            onClick={toggleLike}
-          >
-            {liked ? (
-              <ThumbUpOffAltRoundedIcon className="-scale-x-100" />
-            ) : (
-              <ThumbUpOffAltOutlinedIcon className="-scale-x-100" />
-            )}
-            <h4>Like</h4>
-          </button>
-        )}
-
+        <button
+          className={`postButton ${liked && "text-blue-500"}`}
+          onClick={toggleLike}
+        >
+          {liked ? (
+            <ThumbUpOffAltRoundedIcon className="-scale-x-100" />
+          ) : (
+            <ThumbUpOffAltOutlinedIcon className="-scale-x-100" />
+          )}
+          <h4>Like</h4>
+        </button>
+        <button
+          className="postButton"
+          onClick={() => setShowComment((prev) => !prev)}
+        >
+          <CommentOutlinedIcon />
+          <h4>Comment</h4>
+        </button>
         {session?.user?.email === currentPost.email ? (
           <button
             className="postButton focus:text-red-400"
@@ -251,6 +305,61 @@ function Post({ post, modalPost }) {
           </button>
         )}
       </div>
+
+      {/* Comment Section */}
+      {showComment && (
+        <div className="px-2.5 pt-2">
+          <form
+            onSubmit={submitComment}
+            className="flex items-center space-x-2 mb-2"
+          >
+            <input
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="Write a comment..."
+              className="flex-grow border p-2 rounded-lg"
+            />
+            <button
+              type="submit"
+              className="bg-blue-400 text-white px-3 py-1 rounded-lg"
+            >
+              Post
+            </button>
+          </form>
+          <div className="space-y-2">
+            {currentPost.comments &&
+              currentPost.comments.map((comm) => (
+                <div
+                  key={comm._id || comm.text}
+                  className="flex items-start space-x-2"
+                >
+                  <Avatar src={comm.userImg} className="!h-8 !w-8" />
+                  <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-2 flex-1">
+                    <div className="flex justify-between items-center">
+                      <p className="text-sm font-medium">{comm.username}</p>
+                      {session?.user?.email === comm.email && (
+                        <button
+                          className="text-xs text-red-500"
+                          onClick={async () => {
+                            await deleteComment(comm._id);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-sm">{comm.text}</p>
+                    <TimeAgo
+                      datetime={comm.createdAt}
+                      className="text-xs text-gray-500"
+                    />
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

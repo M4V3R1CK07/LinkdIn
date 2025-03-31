@@ -1,8 +1,8 @@
+// /pages/api/posts/index.js
 import { connectToDatabase } from "../../../util/mongodb";
 
 export default async function handler(req, res) {
   const { method, body } = req;
-
   const { db } = await connectToDatabase();
 
   if (method === "GET") {
@@ -20,11 +20,15 @@ export default async function handler(req, res) {
 
   if (method === "POST") {
     try {
-      // Use new Date() as the timestamp for proper date storage
-      const post = await db
-        .collection("posts")
-        .insertOne({ ...body, timestamp: new Date() });
-      res.status(201).json(post);
+      // Ensure default empty arrays for comments and likes
+      const postData = {
+        ...body,
+        timestamp: new Date().toISOString(),
+        comments: body.comments || [],
+        likes: body.likes || [],
+      };
+      const result = await db.collection("posts").insertOne(postData);
+      res.status(201).json(result);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
