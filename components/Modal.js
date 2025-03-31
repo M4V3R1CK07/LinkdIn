@@ -181,12 +181,23 @@ const Modal = ({ handleClose, type }) => {
           animate="visible"
           exit="exit"
         >
-          <motion.img
-            alt=""
-            onDoubleClick={handleClose}
-            src={post.photoUrl}
-            className="object-contain max-h-[80vh] w-full max-w-3xl rounded-l-lg"
-          />
+          {post.videoUrl ? (
+            <video
+              className="object-contain max-h-[80vh] w-full max-w-3xl rounded-l-lg"
+              controls
+              onDoubleClick={handleClose}
+            >
+              <source src={post.videoUrl} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          ) : (
+            <motion.img
+              alt=""
+              onDoubleClick={handleClose}
+              src={post.photoUrl}
+              className="object-contain max-h-[80vh] w-full max-w-3xl rounded-l-lg"
+            />
+          )}
           <div className="w-full md:w-3/5 bg-white dark:bg-[#1D2226] rounded-r-lg">
             <Post post={post} modalPost />
           </div>

@@ -11,20 +11,51 @@ function Form() {
   const [handlePost, setHandlePost] = useRecoilState(handlePostState);
   const [selectedMedia, setSelectedMedia] = useRecoilState(selectedMediaState);
 
+  // Helper function: Upload the file to permanent storage
+  async function uploadFile(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    return data.url; // Expecting a JSON response: { url: "permanent-file-url" }
+  }
+
   const uploadPost = async (e) => {
     e.preventDefault();
 
+    // Prepare the payload with common fields
+    const payload = {
+      input: input,
+      username: session.user.name,
+      email: session.user.email,
+      userImg: session.user.image,
+      createdAt: new Date().toString(),
+    };
+
+    // If a media file is selected, upload it first and then add its URL to the payload.
+    if (selectedMedia) {
+      // IMPORTANT: Pass the actual file object (selectedMedia.file) for upload.
+      const permanentUrl = await uploadFile(selectedMedia.file);
+      // Check the type to decide which field to use.
+      if (selectedMedia.type.startsWith("image")) {
+        payload.photoUrl = permanentUrl;
+        payload.mediaType = "image";
+      } else if (selectedMedia.type.startsWith("video")) {
+        payload.videoUrl = permanentUrl;
+        payload.mediaType = "video";
+      } else {
+        // Fallback: treat as image if unsure
+        payload.photoUrl = permanentUrl;
+        payload.mediaType = selectedMedia.type;
+      }
+    }
+
     const response = await fetch("/api/posts", {
       method: "POST",
-      body: JSON.stringify({
-        input: input,
-        photoUrl: selectedMedia?.url || null, // Use selectedMedia.url instead of photoUrl
-        mediaType: selectedMedia?.type || null, // Add mediaType to differentiate image/video
-        username: session.user.name,
-        email: session.user.email,
-        userImg: session.user.image,
-        createdAt: new Date().toString(),
-      }),
+      body: JSON.stringify(payload),
       headers: {
         "Content-Type": "application/json",
       },
@@ -51,7 +82,7 @@ function Form() {
 
       {selectedMedia?.url && (
         <div className="relative w-full flex justify-center">
-          {selectedMedia.type === "image" ? (
+          {selectedMedia.type.startsWith("image") ? (
             <img
               src={selectedMedia.url}
               alt="Selected"

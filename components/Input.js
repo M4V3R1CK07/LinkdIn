@@ -21,10 +21,10 @@ function Input() {
     const file = event.target.files[0];
     if (file) {
       const fileURL = URL.createObjectURL(file);
-      setSelectedMedia({ url: fileURL, type }); // Set selected media
+      // Store both the file object and its preview URL:
+      setSelectedMedia({ file, url: fileURL, type });
       setModalType("dropIn");
       setModalOpen(true);
-      // Reset the input value to allow selecting the same file again
       event.target.value = "";
     }
   };

@@ -1,5 +1,4 @@
 import { connectToDatabase } from "../../../util/mongodb";
-import { Timestamp } from "mongodb";
 
 export default async function handler(req, res) {
   const { method, body } = req;
@@ -15,18 +14,19 @@ export default async function handler(req, res) {
         .toArray();
       res.status(200).json(posts);
     } catch (error) {
-      res.status(500).json(error);
+      res.status(500).json({ error: error.message });
     }
   }
 
   if (method === "POST") {
     try {
+      // Use new Date() as the timestamp for proper date storage
       const post = await db
         .collection("posts")
-        .insertOne({ ...body, timestamp: new Timestamp() });
+        .insertOne({ ...body, timestamp: new Date() });
       res.status(201).json(post);
     } catch (error) {
-      res.status(500).json(error);
+      res.status(500).json({ error: error.message });
     }
   }
 }
