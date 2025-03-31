@@ -26,7 +26,10 @@ function Header() {
   const [mounted, setMounted] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
   const [isInputFocused, setIsInputFocused] = useState(false);
-  const [dropdownVisible, setDropdownVisible] = useState(false); // for avatar dropdown
+  const [dropdownVisible, setDropdownVisible] = useState(false); // Avatar dropdown
+  // New state for "For Business" dropdown
+  const [businessDropdownVisible, setBusinessDropdownVisible] = useState(false);
+
   // States for search functionality
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -34,6 +37,7 @@ function Header() {
 
   const { data: session } = useSession();
   const avatarDropdownRef = useRef(null);
+  const businessDropdownRef = useRef(null);
   const searchRef = useRef(null);
 
   useEffect(() => {
@@ -49,9 +53,14 @@ function Header() {
       ) {
         setDropdownVisible(false);
       }
+      if (
+        businessDropdownRef.current &&
+        !businessDropdownRef.current.contains(event.target)
+      ) {
+        setBusinessDropdownVisible(false);
+      }
       if (searchRef.current && !searchRef.current.contains(event.target)) {
-        // Optionally clear search suggestions here if needed
-        // setSearchResults([]);
+        // Optionally clear search suggestions here
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -61,6 +70,7 @@ function Header() {
   useEffect(() => {
     if (!session) {
       setDropdownVisible(false);
+      setBusinessDropdownVisible(false);
     }
   }, [session]);
 
@@ -121,7 +131,6 @@ function Header() {
               )}
             </>
           )}
-
           {/* Search Container */}
           <div
             className={`flex items-center space-x-1 py-2.5 px-4 rounded w-full border transition-colors ${
@@ -144,7 +153,6 @@ function Header() {
               }`}
             />
           </div>
-
           {/* Search Suggestions Dropdown */}
           {searchQuery && searchResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 bg-white dark:bg-[#1D2226] shadow rounded mt-1 z-50">
@@ -248,13 +256,88 @@ function Header() {
             )}
           </div>
 
-          <HeaderLink
-            Icon={AppsOutlinedIcon}
-            text="For Business"
-            feed
-            hidden
-            href="/for-business"
-          />
+          {/* Business Dropdown */}
+          <div className="relative" ref={businessDropdownRef}>
+            <div
+              onClick={() => setBusinessDropdownVisible((prev) => !prev)}
+              className="cursor-pointer flex flex-col items-center"
+            >
+              <AppsOutlinedIcon className="!h-7 !w-7" />
+              <h4 className="text-sm hidden lg:flex justify-center w-full mt-1">
+                For Business &#11167;
+              </h4>
+            </div>
+            {businessDropdownVisible && (
+              <div className="absolute top-full right-0 mt-2 w-80 py-4 bg-white dark:bg-[#1D2226] rounded-lg shadow-lg z-50">
+                {/* My Apps section */}
+                <div className="px-4 pb-2">
+                  <h5 className="text-lg font-bold text-gray-900 dark:text-white">
+                    My Apps
+                  </h5>
+                  <ul className="mt-2 space-y-1">
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Sell
+                    </li>
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Groups
+                    </li>
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Manage Billing
+                    </li>
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Talent Insights
+                    </li>
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Post a job
+                    </li>
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Services Marketplace
+                    </li>
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Advertise
+                    </li>
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Learning
+                    </li>
+                  </ul>
+                </div>
+                <hr className="border-gray-300 dark:border-gray-700 my-2" />
+                {/* Explore more for business section */}
+                <div className="px-4">
+                  <h5 className="text-lg font-bold text-gray-900 dark:text-white">
+                    Explore more for business
+                  </h5>
+                  <ul className="mt-2 space-y-1">
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Hire on LinkedIn: Find, attract and recruit talent
+                    </li>
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Sell with LinkedIn: Unlock sales opportunities
+                    </li>
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Post a job for free: Get qualified applicants quickly
+                    </li>
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Advertise on LinkedIn: Acquire customers and grow your
+                      business
+                    </li>
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Get started with Premium: Expand and leverage your network
+                    </li>
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Learn with LinkedIn: Courses to develop your employees
+                    </li>
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Admin Center: Manage billing and account details
+                    </li>
+                    <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
+                      Create a Company Page
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
 
           {mounted && (
             <div
