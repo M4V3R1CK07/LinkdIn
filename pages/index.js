@@ -1,51 +1,33 @@
-import { getSession, signOut, useSession } from "next-auth/react";
-import { useRouter } from "next/router";
-import { useEffect } from "react";
-import { Geist, Geist_Mono } from "next/font/google";
-import Header from "@/components/Header";
-import Sidebar from "@/components/Sidebar";
-import Head from "next/head";
-import Feed from "@/components/Feed";
-import { useRecoilState } from "recoil";
-import { modalState, modalTypeState } from "@/atoms/modalAtom";
-import Modal from "@/components/Modal";
 import { AnimatePresence } from "framer-motion";
+import { getSession, useSession } from "next-auth/react";
+import Head from "next/head";
+import { useRouter } from "next/router";
+import { useRecoilState } from "recoil";
+import { modalState, modalTypeState } from "../atoms/modalAtom";
+import Feed from "../components/Feed";
+import Header from "../components/Header";
+import Modal from "../components/Modal";
+import Sidebar from "../components/Sidebar";
+// import Widgets from "../components/Widgets";
+import { connectToDatabase } from "../util/mongodb";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export default function Index() {
+export default function Home({ posts, articles }) {
   const [modalOpen, setModalOpen] = useRecoilState(modalState);
   const [modalType, setModalType] = useRecoilState(modalTypeState);
-
-  const { data: session, status } = useSession();
   const router = useRouter();
-
-  useEffect(() => {
-    // If user is not authenticated, redirect to home page
-    if (status === "unauthenticated") {
+  const { status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      // The user is not authenticated, handle it here.
       router.push("/home");
-    }
-  }, [status, router]);
+    },
+  });
 
-  //   // Show loading state while checking authentication
-  //   if (status === "loading") {
-  //     return <div>Loading...</div>;
-  //   }
-
-  // Show main content if authenticated
   return (
     <div className="bg-[#F3F2EF] dark:bg-black dark:text-white h-screen overflow-y-scroll md:space-y-6">
       <Head>
         <title>Feed | LinkedIn</title>
-        <link rel="icon" href="./logos/LinkdIn_Icon.png" />
+        <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <Header />
@@ -53,14 +35,14 @@ export default function Index() {
       <main className="flex justify-center gap-x-5 px-4 sm:px-12">
         <div className="flex flex-col md:flex-row gap-5">
           <Sidebar />
-          <Feed />
-          <AnimatePresence>
-            {modalOpen && (
-              <Modal handleClose={() => setModalOpen(false)} type={modalType} />
-            )}
-          </AnimatePresence>
-          <button onClick={signOut}>Sign Out</button>
+          <Feed posts={posts} />
         </div>
+        <Widgets articles={articles} />
+        <AnimatePresence>
+          {modalOpen && (
+            <Modal handleClose={() => setModalOpen(false)} type={modalType} />
+          )}
+        </AnimatePresence>
       </main>
     </div>
   );
@@ -78,9 +60,32 @@ export async function getServerSideProps(context) {
     };
   }
 
+  // Get posts on SSR
+  const { db } = await connectToDatabase();
+  const posts = await db
+    .collection("posts")
+    .find()
+    .sort({ timestamp: -1 })
+    .toArray();
+
+  // Get Google News API
+  const results = await fetch(
+    `https://newsapi.org/v2/top-headlines?country=us&apiKey=${process.env.NEWS_API_KEY}`
+  ).then((res) => res.json());
+
   return {
     props: {
       session,
+      articles: results.articles,
+      posts: posts.map((post) => ({
+        _id: post._id.toString(),
+        input: post.input,
+        photoUrl: post.photoUrl,
+        username: post.username,
+        email: post.email,
+        userImg: post.userImg,
+        createdAt: post.createdAt,
+      })),
     },
   };
 }
