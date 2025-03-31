@@ -8,12 +8,13 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import AppsOutlinedIcon from "@mui/icons-material/AppsOutlined";
 import { Avatar } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useTheme } from "next-themes";
 import { motion } from "framer-motion";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
+import Link from "next/link";
 
 const spring = {
   type: "spring",
@@ -25,9 +26,29 @@ function Header() {
   const [mounted, setMounted] = useState(false);
   const { setTheme, resolvedTheme } = useTheme();
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
   const { data: session } = useSession();
+  const dropdownRef = useRef(null);
 
   useEffect(() => setMounted(true), []);
+
+  // Collapse the dropdown when clicking outside its container
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Add this useEffect to close the dropdown when session changes (e.g., on sign out)
+  useEffect(() => {
+    if (!session) {
+      setShowDropdown(false);
+    }
+  }, [session]);
 
   return (
     <>
@@ -85,13 +106,77 @@ function Header() {
 
         {/* Right */}
         <div className="flex items-center space-x-6 scale-95">
-          <HeaderLink Icon={HomeRoundedIcon} text="Home" feed active />
-          <HeaderLink Icon={GroupIcon} text="My Network" feed />
-          <HeaderLink Icon={BusinessCenterIcon} text="Jobs" feed hidden />
-          <HeaderLink Icon={ChatIcon} text="Messaging" feed />
-          <HeaderLink Icon={NotificationsIcon} text="Notifications" feed />
-          <HeaderLink text="Me" feed avatar hidden src={session?.user?.image} />
-          <HeaderLink Icon={AppsOutlinedIcon} text="For Business" feed hidden />
+          <HeaderLink Icon={HomeRoundedIcon} text="Home" feed href="/" />
+          <HeaderLink
+            Icon={GroupIcon}
+            text="My Network"
+            feed
+            href="/mynetwork"
+          />
+          <HeaderLink
+            Icon={BusinessCenterIcon}
+            text="Jobs"
+            feed
+            hidden
+            href="/jobs"
+          />
+          <HeaderLink Icon={ChatIcon} text="Messaging" feed href="/messaging" />
+          <HeaderLink
+            Icon={NotificationsIcon}
+            text="Notifications"
+            feed
+            href="/notifications"
+          />
+
+          {/* Avatar with Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <div
+              onClick={() => setShowDropdown((prev) => !prev)}
+              className="cursor-pointer flex flex-col items-center"
+            >
+              <Avatar src={session?.user?.image} className="!h-7 !w-7" />
+              <h4 className="text-sm hidden lg:flex justify-center w-full mt-1">
+                Me &#11167;
+              </h4>
+            </div>
+            {showDropdown && session && (
+              <div className="absolute top-full right-0 mt-2 w-48 py-2 bg-white dark:bg-[#1D2226] rounded-lg shadow-lg z-50">
+                {session.user?.id ? (
+                  <Link href={`/profile/${session.user.id}`}>
+                    <a className="block px-4 py-2 text-gray-800 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
+                      View Profile
+                    </a>
+                  </Link>
+                ) : (
+                  <div className="block px-4 py-2 text-gray-800">
+                    View Profile
+                  </div>
+                )}
+                <Link href="/settings">
+                  <a className="block px-4 py-2 text-gray-800 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700">
+                    Settings
+                  </a>
+                </Link>
+                <button
+                  onClick={() => {
+                    setShowDropdown(false);
+                    signOut();
+                  }}
+                  className="w-full text-left block px-4 py-2 text-gray-800 hover:bg-gray-200 dark:text-white dark:hover:bg-gray-700"
+                >
+                  Sign Out
+                </button>
+              </div>
+            )}
+          </div>
+
+          <HeaderLink
+            Icon={AppsOutlinedIcon}
+            text="For Business"
+            feed
+            hidden
+            href="/for-business"
+          />
 
           {mounted && (
             <div
