@@ -247,6 +247,16 @@ function Post({ post, modalPost, isSaved, unsaveHandler }) {
     console.log("Post reported");
     handleMenuClose();
   };
+  async function uploadFile(file) {
+    const formData = new FormData();
+    formData.append("file", file); // Using key: "file"
+    const res = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    return data.url;
+  }
 
   return (
     <div
@@ -282,8 +292,8 @@ function Post({ post, modalPost, isSaved, unsaveHandler }) {
               <MoreHorizRoundedIcon className="dark:text-white/75 h-7 w-7" />
             </IconButton>
             <Menu
-              anchorEl={anchorEl}
-              open={menuOpen}
+              anchorEl={menuOpen ? menuOpen.anchor : null}
+              open={Boolean(menuOpen)}
               onClose={handleMenuClose}
               anchorOrigin={{
                 vertical: "bottom",
@@ -317,6 +327,7 @@ function Post({ post, modalPost, isSaved, unsaveHandler }) {
         </div>
       )}
 
+      {/* Media Section */}
       {currentPost.videoUrl ? (
         <video
           className="w-full h-auto cursor-pointer"
@@ -331,18 +342,24 @@ function Post({ post, modalPost, isSaved, unsaveHandler }) {
           Your browser does not support the video tag.
         </video>
       ) : currentPost.photoUrl ? (
-        <Image
-          src={currentPost.photoUrl}
-          alt="Post Image"
-          width={500}
-          height={300}
-          className="w-full cursor-pointer"
+        // Wrap the Image in a relative container with fixed height
+        <div
+          className="relative w-full h-64 cursor-pointer"
           onClick={() => {
             setModalOpen(true);
             setModalType("gifYouUp");
             setPostState(currentPost);
           }}
-        />
+        >
+          <Image
+            src={currentPost.photoUrl}
+            alt="Post Image"
+            layout="fill"
+            objectFit="cover"
+            className="rounded"
+            unoptimized // remove this once you've confirmed it works
+          />
+        </div>
       ) : null}
 
       {/* Action Buttons */}
@@ -437,6 +454,12 @@ function Post({ post, modalPost, isSaved, unsaveHandler }) {
       )}
     </div>
   );
+}
+
+// Helper function to truncate text
+function truncate(text, length) {
+  if (!text) return "";
+  return text.length > length ? text.substr(0, length) + "..." : text;
 }
 
 export default Post;
