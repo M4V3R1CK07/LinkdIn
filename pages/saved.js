@@ -1,9 +1,8 @@
-// /pages/saved.js
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Button, Container, Typography } from "@mui/material";
-// Import the Post component that renders the full post as in your feed.
+import { Container, Typography } from "@mui/material";
 import Post from "../components/Post";
+import Header from "../components/Header";
 
 export default function SavedPosts() {
   const [savedPosts, setSavedPosts] = useState([]);
@@ -68,29 +67,28 @@ export default function SavedPosts() {
   }
 
   return (
-    <Container>
-      <Typography variant="h4" gutterBottom>
-        Saved Posts
-      </Typography>
-      {savedPosts && savedPosts.length > 0 ? (
-        savedPosts.map((post) => (
-          <div key={post._id} style={{ marginBottom: "2rem" }}>
-            {/* Render the full post using your existing Post component */}
-            <Post post={post} modalPost={false} />
-            {/* Render an Unsave button below each post */}
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => handleUnsave(post._id)}
-              style={{ marginTop: "0.5em" }}
-            >
-              Unsave
-            </Button>
-          </div>
-        ))
-      ) : (
-        <Typography variant="body1">No saved posts found.</Typography>
-      )}
-    </Container>
+    <div>
+      <Header />
+      <Container>
+        <Typography variant="h4" gutterBottom>
+          Saved Posts
+        </Typography>
+        {savedPosts && savedPosts.length > 0 ? (
+          savedPosts.map((post) => (
+            <div key={post._id} style={{ marginBottom: "2rem" }}>
+              {/* Pass unsaveHandler and isSaved prop to display the three dots menu accordingly */}
+              <Post
+                post={post}
+                modalPost={false}
+                isSaved={true}
+                unsaveHandler={handleUnsave}
+              />
+            </div>
+          ))
+        ) : (
+          <Typography variant="body1">No saved posts found.</Typography>
+        )}
+      </Container>
+    </div>
   );
 }
