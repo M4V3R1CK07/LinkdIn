@@ -74,7 +74,7 @@ function Home({ providers }) {
           <h1 className="text-gray-700 text-3xl md:text-5xl max-w-xl !leading-snug pl-4 xl:pl-0">
             Welcome to your professional community
           </h1>
-          <div className="space-y-4">
+          <div className="space-y-4 text-black">
             {/* Each Intent with a signIn handler */}
             <div
               className="intent cursor-pointer"
