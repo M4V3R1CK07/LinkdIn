@@ -1,3 +1,4 @@
+// /pages/api/posts/saved.js
 import { connectToDatabase } from "../../../util/mongodb";
 import { ObjectId } from "mongodb";
 
@@ -8,7 +9,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { userEmail } = query; // Expect userEmail query parameter
+  const { userEmail } = query;
 
   if (!userEmail) {
     return res.status(400).json({ error: "Missing userEmail parameter" });
@@ -23,7 +24,7 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: "No saved posts found" });
     }
 
-    // Fetch all saved posts from the posts collection
+    // Convert string post IDs to ObjectId and fetch posts details.
     const savedPosts = await db
       .collection("posts")
       .find({ _id: { $in: user.savedPosts.map((id) => new ObjectId(id)) } })

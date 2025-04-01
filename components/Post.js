@@ -1,5 +1,4 @@
-// /components/Post.js
-import { Avatar, IconButton } from "@mui/material";
+import { Avatar, IconButton, Menu, MenuItem } from "@mui/material";
 import MoreHorizRoundedIcon from "@mui/icons-material/MoreHorizRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import ThumbUpOffAltOutlinedIcon from "@mui/icons-material/ThumbUpOffAltOutlined";
@@ -66,7 +65,7 @@ function Post({ post, modalPost }) {
     setModalOpen(false);
   };
 
-  // Toggle like functionality (same as before)
+  // Toggle like functionality remains the same...
   const toggleLike = async () => {
     if (!session) return;
 
@@ -161,10 +160,6 @@ function Post({ post, modalPost }) {
     );
     if (!confirmed) return;
 
-    // Log values to ensure they exist
-    console.log("Deleting comment with ID:", commentId);
-    console.log("From post with ID:", currentPost._id);
-
     try {
       const res = await fetch("/api/posts/comment", {
         method: "DELETE",
@@ -192,6 +187,30 @@ function Post({ post, modalPost }) {
     } catch (error) {
       console.error("Error deleting comment:", error);
     }
+  };
+
+  // --- Dropdown Menu State and Handlers ---
+  const [anchorEl, setAnchorEl] = useState(null);
+  const openMenu = Boolean(anchorEl);
+
+  const handleMenuClick = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleSavePost = () => {
+    // Implement your save functionality here
+    console.log("Post saved");
+    handleMenuClose();
+  };
+
+  const handleReportPost = () => {
+    // Implement your report functionality here
+    console.log("Post reported");
+    handleMenuClose();
   };
 
   return (
@@ -223,9 +242,27 @@ function Post({ post, modalPost }) {
             <CloseRoundedIcon className="dark:text-white/75 h-7 w-7" />
           </IconButton>
         ) : (
-          <IconButton>
-            <MoreHorizRoundedIcon className="dark:text-white/75 h-7 w-7" />
-          </IconButton>
+          <>
+            <IconButton onClick={handleMenuClick}>
+              <MoreHorizRoundedIcon className="dark:text-white/75 h-7 w-7" />
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              open={openMenu}
+              onClose={handleMenuClose}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "right",
+              }}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "right",
+              }}
+            >
+              <MenuItem onClick={handleSavePost}>Save Post</MenuItem>
+              <MenuItem onClick={handleReportPost}>Report Post</MenuItem>
+            </Menu>
+          </>
         )}
       </div>
 

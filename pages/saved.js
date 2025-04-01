@@ -1,73 +1,96 @@
+// /pages/saved.js
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { Button, Container, Typography } from "@mui/material";
+// Import the Post component that renders the full post as in your feed.
 import Post from "../components/Post";
 
-const Saved = () => {
-  const { data: session } = useSession();
+export default function SavedPosts() {
   const [savedPosts, setSavedPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: session } = useSession();
 
+  // Fetch saved posts when the session changes
   useEffect(() => {
-    const fetchSavedPosts = async () => {
-      if (!session?.user?.email) return;
-
+    async function fetchSavedPosts() {
+      if (!session || !session.user?.email) return;
       try {
-        const response = await fetch(
-          `/api/posts/saved?userEmail=${session.user.email}`
+        const res = await fetch(
+          `/api/posts/saved?userEmail=${encodeURIComponent(session.user.email)}`
         );
-        if (response.ok) {
-          const data = await response.json();
+        if (res.ok) {
+          const data = await res.json();
           setSavedPosts(data.savedPosts);
         } else {
           console.error("Failed to fetch saved posts");
         }
       } catch (error) {
         console.error("Error fetching saved posts:", error);
-      } finally {
-        setLoading(false);
       }
-    };
-
+    }
     fetchSavedPosts();
   }, [session]);
 
-  if (!session)
+  // Handler to unsave a post using the DELETE method
+  const handleUnsave = async (postId) => {
+    if (!session) return;
+    try {
+      const res = await fetch("/api/posts/save", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postId,
+          userEmail: session.user.email,
+        }),
+      });
+
+      if (res.ok) {
+        // Update UI by removing the unsaved post from the list.
+        setSavedPosts((prevPosts) =>
+          prevPosts.filter((post) => post._id !== postId)
+        );
+      } else {
+        const errorData = await res.json();
+        console.error("Failed to unsave post:", errorData.error);
+      }
+    } catch (error) {
+      console.error("Error unsaving the post:", error);
+    }
+  };
+
+  if (!session) {
     return (
-      <p className="text-center text-lg font-bold mt-6">
-        Please log in to view your saved posts
-      </p>
+      <Container>
+        <Typography variant="h6">
+          Please sign in to view saved posts.
+        </Typography>
+      </Container>
     );
-  if (loading)
-    return (
-      <p className="text-center text-lg font-bold mt-6">
-        Loading saved posts...
-      </p>
-    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
-      <h2 className="text-2xl font-bold text-center mb-6 text-gray-800 dark:text-white">
+    <Container>
+      <Typography variant="h4" gutterBottom>
         Saved Posts
-      </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {savedPosts.length === 0 ? (
-          <p className="col-span-full text-center text-gray-600 dark:text-gray-300">
-            No saved posts found.
-          </p>
-        ) : (
-          savedPosts.map((post) => (
-            <div
-              key={post._id}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4"
+      </Typography>
+      {savedPosts && savedPosts.length > 0 ? (
+        savedPosts.map((post) => (
+          <div key={post._id} style={{ marginBottom: "2rem" }}>
+            {/* Render the full post using your existing Post component */}
+            <Post post={post} modalPost={false} />
+            {/* Render an Unsave button below each post */}
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={() => handleUnsave(post._id)}
+              style={{ marginTop: "0.5em" }}
             >
-              {/* Render each saved post using the Post component */}
-              <Post post={post} modalPost={false} />
-            </div>
-          ))
-        )}
-      </div>
-    </div>
+              Unsave
+            </Button>
+          </div>
+        ))
+      ) : (
+        <Typography variant="body1">No saved posts found.</Typography>
+      )}
+    </Container>
   );
-};
-
-export default Saved;
+}

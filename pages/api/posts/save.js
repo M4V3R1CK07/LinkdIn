@@ -1,14 +1,16 @@
+// /pages/api/posts/save.js
 import { connectToDatabase } from "../../../util/mongodb";
 import { ObjectId } from "mongodb";
 
 export default async function handler(req, res) {
   const { method, body } = req;
 
+  // Validate required fields
   if (!body.postId || !body.userEmail) {
     return res.status(400).json({ error: "Missing postId or userEmail" });
   }
 
-  const { postId, userEmail } = body; // Extract postId and userEmail
+  const { postId, userEmail } = body;
   const { db } = await connectToDatabase();
 
   try {
