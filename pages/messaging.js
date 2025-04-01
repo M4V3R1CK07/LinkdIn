@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Header from "../components/Header";
 import { useState } from "react";
 
@@ -45,10 +46,6 @@ export default function MessagingPage() {
     },
   ];
 
-  // State for:
-  // - The currently selected conversation (default to the first one).
-  // - The messages of the selected conversation.
-  // - A new message in the input box.
   const [selectedConversation, setSelectedConversation] = useState(
     dummyConversations[0]
   );
@@ -96,7 +93,7 @@ export default function MessagingPage() {
                     setMessages(dummyMessages);
                   }}
                 >
-                  <img
+                  <Image
                     src={conv.avatar}
                     alt={conv.name}
                     className="w-12 h-12 rounded-full object-cover"

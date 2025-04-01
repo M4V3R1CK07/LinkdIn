@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Header from "../components/Header";
 import { getSession } from "next-auth/react";
 
@@ -12,11 +13,7 @@ export async function getServerSideProps({ req }) {
     };
   }
 
-  // The session object holds user info.
-  // You could also fetch additional info from your database here if needed.
   const user = {
-    // Ensure session.user contains these fields.
-    // If your session doesn't have an image, fallback to a default image.
     name: session.user.name || "Your Name",
     email: session.user.email || "your.email@example.com",
     image: session.user.image || DEFAULT_USER_IMAGE,
@@ -65,7 +62,7 @@ export default function JobPage({ user }) {
           <div className="md:col-span-1">
             <div className="bg-white dark:bg-[#1D2226] p-6 rounded-md shadow">
               <div className="flex flex-col items-center">
-                <img
+                <Image
                   src={user.image}
                   alt={user.name}
                   className="w-24 h-24 rounded-full object-cover mb-4"

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Header from "../components/Header";
 import { getSession } from "next-auth/react";
 
@@ -78,7 +79,7 @@ export default function NotificationsPage({ user, notifications }) {
           <div className="md:col-span-1">
             <div className="bg-white dark:bg-[#1D2226] p-6 rounded-md shadow">
               <div className="flex flex-col items-center">
-                <img
+                <Image
                   src={user.image}
                   alt={user.name}
                   className="w-24 h-24 rounded-full object-cover mb-4"

@@ -170,7 +170,7 @@ function Header() {
                       setSearchResults([]);
                     }}
                   >
-                    <img
+                    <Image
                       src={user.image || "/default-user.png"}
                       alt={user.name}
                       className="w-8 h-8 rounded-full object-cover"

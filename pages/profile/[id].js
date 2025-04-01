@@ -1,11 +1,10 @@
-// pages/profile/[id].js
-
 import { getSession, useSession } from "next-auth/react";
 import { ObjectId } from "mongodb";
 import clientPromise from "../../lib/mongodb";
 import Header from "../../components/Header";
 import { useState } from "react";
 import EditIcon from "@mui/icons-material/Edit";
+import Image from "next/image";
 
 export async function getServerSideProps({ params, req }) {
   const session = await getSession({ req });
@@ -227,7 +226,7 @@ export default function ProfilePage({ user }) {
           ></div>
           {/* Profile Image */}
           <div className="absolute left-8 bottom-0 transform translate-y-1/2">
-            <img
+            <Image
               src={user.image}
               alt={user.name}
               className="w-32 h-32 rounded-full border-4 border-white"

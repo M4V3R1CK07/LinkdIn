@@ -1,3 +1,4 @@
+// ./components/Sidebar.js
 import React, { useEffect, useState } from "react";
 import { Avatar } from "@mui/material";
 import Image from "next/image";
@@ -6,6 +7,7 @@ import GroupsIcon from "@mui/icons-material/Groups";
 import { signOut, useSession } from "next-auth/react";
 import NewspaperIcon from "@mui/icons-material/Newspaper";
 import EventIcon from "@mui/icons-material/Event";
+import Link from "next/link"; // Import Link for navigation
 
 function Sidebar() {
   const { data: session } = useSession();
@@ -80,9 +82,9 @@ function Sidebar() {
         <div className="font-medium py-3 px-4 cursor-pointer space-y-0.5">
           <div className="flex items-center space-x-2">
             <BookmarkOutlinedIcon fontSize="small" />
-            <a href="/saved" className="sidebarLink">
-              Saved items
-            </a>
+            <Link href="/saved" passHref>
+              <a className="sidebarLink">Saved items</a>
+            </Link>
           </div>
           <div className="flex items-center space-x-2">
             <GroupsIcon fontSize="small" />

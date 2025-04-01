@@ -29,8 +29,8 @@ function Widgets({ articles }) {
                 </button>
               </div>
               <p className="text-xs text-gray-700 dark:text-gray-300 mt-2">
-                These are the day's top professional news stories and
-                conversations. Learn more about how they're selected.
+                These are the day&apos;s top professional news stories and
+                conversations. Learn more about how they&apos;re selected.
               </p>
             </div>
           )}

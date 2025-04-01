@@ -11,6 +11,7 @@ import { getPostState, selectedMediaState } from "../atoms/postAtom";
 import Post from "./Post";
 import PhotoSizeSelectActualIcon from "@mui/icons-material/PhotoSizeSelectActual";
 import SmartDisplayIcon from "@mui/icons-material/SmartDisplay";
+import Image from "next/image";
 
 const dropIn = {
   hidden: {
@@ -155,7 +156,7 @@ const Modal = ({ handleClose, type }) => {
             {selectedMedia && mediaUrl && (
               <div className="mt-4">
                 {selectedMedia.type.startsWith("image") ? (
-                  <img
+                  <Image
                     src={mediaUrl}
                     alt="Media Preview"
                     className="w-full h-auto object-contain rounded"

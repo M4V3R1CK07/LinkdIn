@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useRecoilState } from "recoil";
 import { modalState } from "../atoms/modalAtom";
 import { handlePostState, selectedMediaState } from "../atoms/postAtom";
+import Image from "next/image";
 
 function Form() {
   const [input, setInput] = useState("");
@@ -83,7 +84,7 @@ function Form() {
       {selectedMedia?.url && (
         <div className="relative w-full flex justify-center">
           {selectedMedia.type.startsWith("image") ? (
-            <img
+            <Image
               src={selectedMedia.url}
               alt="Selected"
               className="max-w-full max-h-40 rounded-lg"

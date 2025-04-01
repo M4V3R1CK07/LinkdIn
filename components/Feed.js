@@ -23,7 +23,7 @@ function Feed({ posts }) {
     };
 
     fetchPosts();
-  }, [handlePost]);
+  }, [handlePost, setHandlePost, setUseSSRPosts]); // Add the missing dependencies
 
   return (
     <div className="space-y-6 pb-24 max-w-lg">

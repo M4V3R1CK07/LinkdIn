@@ -2,6 +2,7 @@ import Header from "../components/Header";
 import clientPromise from "../lib/mongodb";
 import { getSession } from "next-auth/react";
 import { ObjectId } from "mongodb";
+import Image from "next/image";
 
 export async function getServerSideProps({ req }) {
   try {
@@ -75,7 +76,7 @@ export default function MyNetwork({ connections = [], myConnectionsCount }) {
                   key={person.id}
                   className="flex items-center bg-gray-50 dark:bg-gray-800 rounded p-3"
                 >
-                  <img
+                  <Image
                     src={person.image}
                     alt={person.name}
                     className="w-16 h-16 rounded-full object-cover"
