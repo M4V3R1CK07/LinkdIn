@@ -229,6 +229,8 @@ export default function ProfilePage({ user }) {
             <Image
               src={user.image}
               alt={user.name}
+              width={128}
+              height={128}
               className="w-32 h-32 rounded-full border-4 border-white"
             />
           </div>

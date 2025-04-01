@@ -96,6 +96,8 @@ export default function MessagingPage() {
                   <Image
                     src={conv.avatar}
                     alt={conv.name}
+                    width={128}
+                    height={128}
                     className="w-12 h-12 rounded-full object-cover"
                   />
                   <div className="ml-4 flex-grow">

@@ -82,6 +82,8 @@ export default function NotificationsPage({ user, notifications }) {
                 <Image
                   src={user.image}
                   alt={user.name}
+                  width={64}
+                  height={64}
                   className="w-24 h-24 rounded-full object-cover mb-4"
                 />
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
