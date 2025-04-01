@@ -24,7 +24,7 @@ function generateTempObjectId() {
   return objectId;
 }
 
-function Post({ post, modalPost }) {
+function Post({ post, modalPost, isSaved, unsaveHandler }) {
   const { data: session } = useSession();
   const [modalOpen, setModalOpen] = useRecoilState(modalState);
   const [modalType, setModalType] = useRecoilState(modalTypeState);
@@ -191,20 +191,55 @@ function Post({ post, modalPost }) {
 
   // --- Dropdown Menu State and Handlers ---
   const [anchorEl, setAnchorEl] = useState(null);
-  const openMenu = Boolean(anchorEl);
+  const menuOpen = Boolean(anchorEl);
 
-  const handleMenuClick = (event) => {
-    setAnchorEl(event.currentTarget);
+  const handleMenuOpen = (e) => {
+    setAnchorEl(e.currentTarget);
   };
 
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
 
-  const handleSavePost = () => {
-    // Implement your save functionality here
-    console.log("Post saved");
+  // Handler for the unsave action
+  const handleUnsaveClick = () => {
+    if (unsaveHandler) {
+      unsaveHandler(post._id);
+    }
     handleMenuClose();
+  };
+
+  const handleSavePost = async () => {
+    // Check if user is logged in
+    if (!session?.user?.email) {
+      console.error("User not authenticated.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/posts/save", {
+        method: "PUT", // Using PUT for save based on your API
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          postId: post._id, // Ensure this is a string and matches how it's stored.
+          userEmail: session.user.email,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        console.log("Post saved successfully:", data.message);
+        // Optionally update local UI state to reflect the saved status.
+      } else {
+        console.error("Error saving post:", data.error);
+      }
+    } catch (error) {
+      console.error("Error calling save post API:", error);
+    } finally {
+      // Close the menu regardless of success or failure
+      handleMenuClose();
+    }
   };
 
   const handleReportPost = () => {
@@ -243,12 +278,12 @@ function Post({ post, modalPost }) {
           </IconButton>
         ) : (
           <>
-            <IconButton onClick={handleMenuClick}>
+            <IconButton onClick={handleMenuOpen}>
               <MoreHorizRoundedIcon className="dark:text-white/75 h-7 w-7" />
             </IconButton>
             <Menu
               anchorEl={anchorEl}
-              open={openMenu}
+              open={menuOpen}
               onClose={handleMenuClose}
               anchorOrigin={{
                 vertical: "bottom",
@@ -259,7 +294,10 @@ function Post({ post, modalPost }) {
                 horizontal: "right",
               }}
             >
-              <MenuItem onClick={handleSavePost}>Save Post</MenuItem>
+              {/* Conditionally display "Unsave Post" if isSaved is true, otherwise "Save Post" */}
+              <MenuItem onClick={isSaved ? handleUnsaveClick : handleSavePost}>
+                {isSaved ? "Unsave Post" : "Save Post"}
+              </MenuItem>
               <MenuItem onClick={handleReportPost}>Report Post</MenuItem>
             </Menu>
           </>

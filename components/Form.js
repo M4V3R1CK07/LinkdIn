@@ -87,6 +87,8 @@ function Form() {
             <Image
               src={selectedMedia.url}
               alt="Selected"
+              layout="fill"
+              priority
               className="max-w-full max-h-40 rounded-lg"
             />
           ) : (

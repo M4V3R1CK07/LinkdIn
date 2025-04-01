@@ -173,6 +173,8 @@ function Header() {
                     <Image
                       src={user.image || "/default-user.png"}
                       alt={user.name}
+                      width={32}
+                      height={32}
                       className="w-8 h-8 rounded-full object-cover"
                     />
                     <div className="ml-3">

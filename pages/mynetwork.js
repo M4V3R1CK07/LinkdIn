@@ -79,6 +79,8 @@ export default function MyNetwork({ connections = [], myConnectionsCount }) {
                   <Image
                     src={person.image}
                     alt={person.name}
+                    width={64}
+                    height={64}
                     className="w-16 h-16 rounded-full object-cover"
                   />
                   <div className="ml-4 flex-grow">
