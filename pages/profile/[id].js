@@ -31,7 +31,6 @@ export async function getServerSideProps({ params, req }) {
     return { notFound: true };
   }
 
-  // Convert ObjectId and assign default values (keeping original placement/styling)
   user._id = user._id.toString();
   user.image = user.image || "/default-user.png";
   user.name = user.name || "Add a Name";
