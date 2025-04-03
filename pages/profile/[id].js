@@ -5,7 +5,11 @@ import Header from "../../components/Header";
 import { useState } from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import Image from "next/image";
+import Link from "next/link";
 
+// --------------------------------------------------------------------
+// getServerSideProps: Fetch user data, connections count, skills & achievements
+// --------------------------------------------------------------------
 export async function getServerSideProps({ params, req }) {
   const session = await getSession({ req });
   if (!session) {
@@ -27,6 +31,7 @@ export async function getServerSideProps({ params, req }) {
     return { notFound: true };
   }
 
+  // Convert ObjectId and assign default values (keeping original placement/styling)
   user._id = user._id.toString();
   user.image = user.image || "/default-user.png";
   user.name = user.name || "Add a Name";
@@ -37,48 +42,106 @@ export async function getServerSideProps({ params, req }) {
   user.summary =
     user.summary ||
     "Add your summary here to let people know about you! This may include your passions, professional highlights, and personality traits.";
-  user.connections = user.connections || 202;
-  user.profileViews = user.profileViews || 8;
-  user.searchAppearances = user.searchAppearances || 2;
 
-  return { props: { user } };
+  // Get the connections count from the database (or fallback dummy)
+  const connectionsCount = await db.collection("connections").countDocuments({
+    users: user._id, // Make sure user._id is stored as a string in the connection documents.
+    status: "accepted",
+  });
+
+  // Retrieve skills and achievements or use fallback dummy data
+  const skills = user.skills || [];
+  const achievements = user.achievements || [];
+
+  return { props: { user, connectionsCount, skills, achievements } };
 }
 
-export default function ProfilePage({ user }) {
-  // Compare the logged-in user's id with the profile id
+// --------------------------------------------------------------------
+// Helper: format achievements to editable text
+// --------------------------------------------------------------------
+function formatAchievementsToText(achievementsArray) {
+  return achievementsArray
+    .map(
+      (ach) =>
+        `${ach.title} | ${ach.issuer} | ${formattedDate} | ${ach.description}`
+    )
+    .join("\n");
+}
+
+const monthNames = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+// --------------------------------------------------------------------
+// ProfilePage Component
+// --------------------------------------------------------------------
+export default function ProfilePage({
+  user,
+  connectionsCount,
+  skills,
+  achievements,
+}) {
   const { data: session } = useSession();
   const isOwnProfile = session?.user?.id === user._id;
 
-  // State for editing Name.
+  const initialAchievements = (achievements || []).map((ach) => ({
+    ...ach,
+    month: ach.month !== undefined ? ach.month : new Date().getMonth(), // 0-indexed month
+    year: ach.year !== undefined ? ach.year : new Date().getFullYear(),
+  }));
+
+  // Existing editable state for basic profile fields
   const [editingName, setEditingName] = useState(false);
   const [editedName, setEditedName] = useState(user.name);
   const [updatingName, setUpdatingName] = useState(false);
 
-  // State for editing About (summary).
   const [editingAbout, setEditingAbout] = useState(false);
   const [editedAbout, setEditedAbout] = useState(user.summary);
   const [updatingAbout, setUpdatingAbout] = useState(false);
 
-  // State for editing Pronouns
   const [editingPronouns, setEditingPronouns] = useState(false);
   const [editedPronouns, setEditedPronouns] = useState(user.pronouns);
   const [updatingPronouns, setUpdatingPronouns] = useState(false);
 
-  // State for editing Membership
   const [editingMembership, setEditingMembership] = useState(false);
   const [editedMembership, setEditedMembership] = useState(user.membership);
   const [updatingMembership, setUpdatingMembership] = useState(false);
 
-  // State for editing Title
   const [editingTitle, setEditingTitle] = useState(false);
   const [editedTitle, setEditedTitle] = useState(user.title);
   const [updatingTitle, setUpdatingTitle] = useState(false);
 
-  // State for editing Location
   const [editingLocation, setEditingLocation] = useState(false);
   const [editedLocation, setEditedLocation] = useState(user.location);
   const [updatingLocation, setUpdatingLocation] = useState(false);
 
+  const [editingSkills, setEditingSkills] = useState(false);
+  const [editedSkills, setEditedSkills] = useState(skills);
+  const [newSkill, setNewSkill] = useState("");
+  const [updatingSkills, setUpdatingSkills] = useState(false);
+
+  // New state for Achievements editing (multiline text)
+  const [editingAchievements, setEditingAchievements] = useState(false);
+  const [editedAchievements, setEditedAchievements] =
+    useState(initialAchievements);
+  const [updatingAchievements, setUpdatingAchievements] = useState(false);
+
+  const [selectedMonth, setSelectedMonth] = useState(0); // 0 = January
+  const [selectedYear, setSelectedYear] = useState("2024"); // default year
+  // --------------------------------------------------------------------
+  // Update Handlers for each field
+  // --------------------------------------------------------------------
   const handleSaveName = async () => {
     setUpdatingName(true);
     try {
@@ -211,6 +274,95 @@ export default function ProfilePage({ user }) {
     }
   };
 
+  const handleMonthChange = (e, index) => {
+    const newMonth = parseInt(e.target.value);
+    setEditedAchievements((prevAchievements) =>
+      prevAchievements.map((ach, i) =>
+        i === index ? { ...ach, month: newMonth } : ach
+      )
+    );
+  };
+
+  const handleYearChange = (e, index) => {
+    const newYear = e.target.value;
+    setEditedAchievements((prevAchievements) =>
+      prevAchievements.map((ach, i) =>
+        i === index ? { ...ach, year: newYear } : ach
+      )
+    );
+  };
+
+  // New handlers for Skills and Achievements
+
+  // Handler for adding a new skill
+  const handleAddSkill = () => {
+    const trimmedSkill = newSkill.trim();
+    if (trimmedSkill && !editedSkills.includes(trimmedSkill)) {
+      setEditedSkills([...editedSkills, trimmedSkill]);
+      setNewSkill("");
+    }
+  };
+
+  // Handler for removing a skill by index
+  const handleRemoveSkill = (index) => {
+    const updated = [...editedSkills];
+    updated.splice(index, 1);
+    setEditedSkills(updated);
+  };
+  const handleSaveSkills = async () => {
+    setUpdatingSkills(true);
+    try {
+      const res = await fetch(`/api/users/${user._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ skills: editedSkills }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEditingSkills(false);
+      } else {
+        alert(data.message || "Unable to update skills");
+      }
+    } catch (error) {
+      console.error("Error updating skills:", error);
+      alert("Error updating skills");
+    } finally {
+      setUpdatingSkills(false);
+    }
+  };
+
+  const handleSaveAchievements = async () => {
+    setUpdatingAchievements(true);
+    try {
+      // Filter out achievements with an empty title.
+      const achievementsToSave = editedAchievements.filter(
+        (ach) => ach.title.trim() !== ""
+      );
+      const res = await fetch(`/api/users/${user._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ achievements: achievementsToSave }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEditingAchievements(false);
+        // Optionally, update the achievements state from the new result.
+      } else {
+        alert(data.message || "Unable to update achievements");
+      }
+    } catch (error) {
+      console.error("Error updating achievements:", error);
+      alert("Error updating achievements");
+    } finally {
+      setUpdatingAchievements(false);
+    }
+  };
+
+  const formattedDate = `${monthNames[selectedMonth]} ${selectedYear}`;
+
+  // --------------------------------------------------------------------
+  // Render Profile Page – Using existing styling/placement
+  // --------------------------------------------------------------------
   return (
     <div className="bg-[#F3F2EF] dark:bg-black dark:text-white h-screen overflow-y-scroll md:space-y-6">
       <Header />
@@ -287,7 +439,13 @@ export default function ProfilePage({ user }) {
               </h1>
             )}
 
-            {/* Pronouns with edit functionality */}
+            {/* Display connection count */}
+            <Link href="/mynetwork" passHref>
+              <a className="mt-1 text-gray-600 dark:text-gray-300">
+                Connections: {connectionsCount}
+              </a>
+            </Link>
+
             {isOwnProfile ? (
               <div className="mt-1 flex items-center space-x-2">
                 {!editingPronouns ? (
@@ -337,7 +495,7 @@ export default function ProfilePage({ user }) {
               </p>
             )}
 
-            {/* Membership with edit functionality */}
+            {/* Membership */}
             {isOwnProfile ? (
               <div className="mt-2 flex items-center space-x-2">
                 {!editingMembership ? (
@@ -382,7 +540,7 @@ export default function ProfilePage({ user }) {
               <p className="mt-2 text-blue-600">{user.membership}</p>
             )}
 
-            {/* Title with edit functionality */}
+            {/* Title */}
             {isOwnProfile ? (
               <div className="mt-1 flex items-center space-x-2">
                 {!editingTitle ? (
@@ -431,7 +589,7 @@ export default function ProfilePage({ user }) {
               </p>
             )}
 
-            {/* Location with edit functionality */}
+            {/* Location */}
             <div className="mt-2 flex items-center text-gray-600 dark:text-gray-300">
               <svg
                 className="w-4 h-4 mr-1 fill-current"
@@ -444,10 +602,10 @@ export default function ProfilePage({ user }) {
                 <>
                   {!editingLocation ? (
                     <>
-                      <span>{editedLocation}</span>
+                      <p>{editedLocation}</p>
                       <button
                         onClick={() => setEditingLocation(true)}
-                        className="ml-1 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                        className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
                         title="Edit Location"
                       >
                         <EditIcon className="w-4 h-4 text-gray-600 dark:text-gray-300" />
@@ -459,7 +617,7 @@ export default function ProfilePage({ user }) {
                         type="text"
                         value={editedLocation}
                         onChange={(e) => setEditedLocation(e.target.value)}
-                        className="text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 p-1 rounded"
+                        className="bg-gray-100 dark:bg-gray-800 p-1 rounded"
                       />
                       <button
                         onClick={handleSaveLocation}
@@ -481,91 +639,349 @@ export default function ProfilePage({ user }) {
                   )}
                 </>
               ) : (
-                <span>{user.location}</span>
+                <p>{user.location}</p>
               )}
-            </div>
-
-            <div className="mt-4 space-x-4">
-              <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">
-                Contact Info
-              </button>
             </div>
           </div>
 
-          {/* Analytics Section */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-white dark:bg-[#1D2226] rounded-md shadow text-center">
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {user.connections}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Connections
-              </p>
-            </div>
-            <div className="p-4 bg-white dark:bg-[#1D2226] rounded-md shadow text-center">
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {user.profileViews}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Profile Views
-              </p>
-            </div>
-            <div className="p-4 bg-white dark:bg-[#1D2226] rounded-md shadow text-center">
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {user.searchAppearances}
-              </p>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                Search Appearances
-              </p>
-            </div>
-          </div>
-
-          {/* About Section */}
-          <div className="mt-8 bg-white dark:bg-[#1D2226] p-6 rounded-md shadow">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                About
-              </h2>
-              {isOwnProfile && !editingAbout && (
-                <button
-                  onClick={() => setEditingAbout(true)}
-                  className="text-blue-600 hover:underline"
-                >
-                  Edit
-                </button>
-              )}
-            </div>
-            {isOwnProfile && editingAbout ? (
-              <div>
-                <textarea
-                  value={editedAbout}
-                  onChange={(e) => setEditedAbout(e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded dark:bg-gray-800 dark:text-white"
-                  rows={4}
-                />
-                <div className="flex space-x-2 mt-2">
-                  <button
-                    onClick={handleSaveAbout}
-                    disabled={updatingAbout}
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    {updatingAbout ? "Saving…" : "Save"}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditingAbout(false);
-                      setEditedAbout(user.summary);
-                    }}
-                    className="px-4 py-2 bg-gray-300 text-black rounded hover:bg-gray-400"
-                  >
-                    Cancel
-                  </button>
+          <div className="bg-white dark:bg-[#1D2226] p-6 mt-6 rounded-md shadow">
+            {isOwnProfile ? (
+              <div className="mt-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+                    About
+                  </h2>
+                  {!editingAbout && (
+                    <button
+                      onClick={() => setEditingAbout(true)}
+                      className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                      title="Edit About"
+                    >
+                      <EditIcon className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                    </button>
+                  )}
                 </div>
+                {!editingAbout ? (
+                  <p className="mt-1 text-gray-600 dark:text-gray-300">
+                    {editedAbout}
+                  </p>
+                ) : (
+                  <div className="flex flex-col">
+                    <textarea
+                      value={editedAbout}
+                      onChange={(e) => setEditedAbout(e.target.value)}
+                      className="mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded"
+                      rows={4}
+                    />
+                    <div className="mt-2 flex space-x-2">
+                      <button
+                        onClick={handleSaveAbout}
+                        disabled={updatingAbout}
+                        className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      >
+                        {updatingAbout ? "Saving…" : "Save"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingAbout(false);
+                          setEditedAbout(user.summary);
+                        }}
+                        className="px-4 py-1 bg-gray-300 text-black rounded hover:bg-gray-400"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
-              <p className="text-gray-700 dark:text-gray-200">{editedAbout}</p>
+              <div className="mt-4">
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+                  About
+                </h2>
+                <p className="mt-1 text-gray-600 dark:text-gray-300">
+                  {user.summary}
+                </p>
+              </div>
             )}
           </div>
+
+          {/* Editable Achievements and Skills Section */}
+          <div className="mt-8">
+            {/* Skills Section */}
+            <div className="bg-white dark:bg-[#1D2226] p-6 rounded-md shadow mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+                  Skills
+                </h2>
+                {isOwnProfile && (
+                  <button
+                    onClick={() => setEditingSkills(!editingSkills)}
+                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                    title="Edit Skills"
+                  >
+                    <EditIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                  </button>
+                )}
+              </div>
+              {editingSkills ? (
+                <div className="flex flex-col space-y-4">
+                  {/* Display the skills as individual chips */}
+                  <div className="flex flex-wrap gap-2">
+                    {editedSkills.map((skill, index) => (
+                      <div
+                        key={index}
+                        className="bg-gray-200 dark:bg-gray-700 px-3 py-1 rounded flex items-center"
+                      >
+                        <span className="text-gray-800 dark:text-white">
+                          {skill}
+                        </span>
+                        <button
+                          onClick={() => handleRemoveSkill(index)}
+                          className="ml-2 text-red-500 hover:text-red-700"
+                          title="Remove skill"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Input field to add a new skill */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newSkill}
+                      onChange={(e) => setNewSkill(e.target.value)}
+                      placeholder="Add a skill"
+                      className="px-3 py-2 border rounded flex-grow bg-gray-50 dark:bg-gray-800"
+                    />
+                    <button
+                      onClick={handleAddSkill}
+                      className="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                      Add
+                    </button>
+                  </div>
+                  {/* Save and Cancel buttons */}
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={handleSaveSkills}
+                      disabled={updatingSkills}
+                      className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                      {updatingSkills ? "Saving…" : "Save"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingSkills(false);
+                        setEditedSkills(skills); // Reset to original skills from props
+                        setNewSkill("");
+                      }}
+                      className="px-4 py-1 bg-gray-300 text-black rounded hover:bg-gray-400"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {skills.length > 0 ? (
+                    <ul className="space-y-2">
+                      {skills.map((skill, index) => (
+                        <li
+                          key={index}
+                          className="text-gray-700 dark:text-gray-300 border-b pb-1"
+                        >
+                          {skill}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-gray-600 dark:text-gray-300">
+                      You haven't added any skills yet. Click Edit to add your
+                      skills.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Achievements Section */}
+            <div className="bg-white dark:bg-[#1D2226] p-6 rounded-md shadow">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+                  Achievements
+                </h2>
+                {isOwnProfile && (
+                  <button
+                    onClick={() => setEditingAchievements(!editingAchievements)}
+                    className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                    title="Edit Achievements"
+                  >
+                    <EditIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                  </button>
+                )}
+              </div>
+              {editingAchievements ? (
+                <div className="flex flex-col space-y-4">
+                  {/* Render each achievement as its own card */}
+                  {editedAchievements.map((ach, index) => (
+                    <div
+                      key={index}
+                      className="border p-4 rounded bg-gray-50 dark:bg-gray-800"
+                    >
+                      <div className="flex justify-between items-center">
+                        <input
+                          type="text"
+                          value={ach.title}
+                          onChange={(e) => {
+                            const newAch = [...editedAchievements];
+                            newAch[index].title = e.target.value;
+                            setEditedAchievements(newAch);
+                          }}
+                          placeholder="Title"
+                          className="w-full p-2 border rounded dark:bg-gray-700"
+                        />
+                        <button
+                          onClick={() => {
+                            const newAchievements = editedAchievements.filter(
+                              (_, i) => i !== index
+                            );
+                            setEditedAchievements(newAchievements);
+                          }}
+                          className="ml-2 text-red-500 hover:text-red-700"
+                          title="Delete Achievement"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={ach.issuer}
+                        onChange={(e) => {
+                          const newAch = [...editedAchievements];
+                          newAch[index].issuer = e.target.value;
+                          setEditedAchievements(newAch);
+                        }}
+                        placeholder="Issuer"
+                        className="w-full p-2 border rounded dark:bg-gray-700 mt-2"
+                      />
+                      <div className="flex space-x-2 mt-2">
+                        <p className="my-2">Issue Date -</p>
+                        <select
+                          className="p-2 border rounded dark:bg-gray-700"
+                          value={ach.month}
+                          onChange={(e) => handleMonthChange(e, index)}
+                        >
+                          {monthNames.map((month, idx) => (
+                            <option key={idx} value={idx}>
+                              {month}
+                            </option>
+                          ))}
+                        </select>
+                        <select
+                          className="p-2 border rounded dark:bg-gray-700"
+                          value={ach.year}
+                          onChange={(e) => handleYearChange(e, index)}
+                        >
+                          {Array.from({ length: 10 }, (_, i) => {
+                            const year = new Date().getFullYear() - 5 + i;
+                            return (
+                              <option key={year} value={year}>
+                                {year}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      </div>
+                      <div className="mt-2">
+                        Selected Date: {`${monthNames[ach.month]} ${ach.year}`}
+                      </div>
+                      <textarea
+                        value={ach.description}
+                        onChange={(e) => {
+                          const newAch = [...editedAchievements];
+                          newAch[index].description = e.target.value;
+                          setEditedAchievements(newAch);
+                        }}
+                        placeholder="Description"
+                        className="w-full p-2 border rounded dark:bg-gray-700 mt-2"
+                        rows="3"
+                      />
+                    </div>
+                  ))}
+
+                  {/* Button to add a new achievement only if current last one is not blank */}
+                  <button
+                    onClick={() => {
+                      // Prevent adding a new blank achievement if the last one is still blank
+                      if (
+                        editedAchievements.length === 0 ||
+                        editedAchievements[
+                          editedAchievements.length - 1
+                        ].title.trim() !== ""
+                      ) {
+                        setEditedAchievements([
+                          ...editedAchievements,
+                          { title: "", issuer: "", date: "", description: "" },
+                        ]);
+                      }
+                    }}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  >
+                    Add New Achievement
+                  </button>
+
+                  {/* Save and Cancel buttons */}
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={handleSaveAchievements}
+                      disabled={updatingAchievements}
+                      className="px-4 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                      {updatingAchievements ? "Saving…" : "Save"}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingAchievements(false);
+                        // Reset to original achievements
+                        setEditedAchievements(achievements);
+                      }}
+                      className="px-4 py-1 bg-gray-300 text-black rounded hover:bg-gray-400"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {achievements.length > 0 ? (
+                    <ul className="space-y-4">
+                      {achievements.map((ach, index) => (
+                        <li key={index} className="border-b pb-2">
+                          <h3 className="text-lg font-bold text-gray-800 dark:text-white">
+                            {ach.title}
+                          </h3>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">
+                            {ach.issuer} - {formattedDate}
+                          </p>
+                          <p className="text-gray-700 dark:text-gray-200">
+                            {ach.description}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-gray-600 dark:text-gray-300">
+                      You haven't added any achievements yet. Click Edit to add
+                      one.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+          {/* End of Achievements and Skills Section */}
         </div>
       </div>
     </div>

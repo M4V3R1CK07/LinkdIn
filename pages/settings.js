@@ -80,22 +80,6 @@ export default function SettingsPage() {
               </div>
             </section>
 
-            {/* Display Section */}
-            <section className="bg-white dark:bg-[#1D2226] rounded-md shadow p-6">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                Display
-              </h3>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-700 dark:text-gray-300">
-                  Dark Mode
-                </span>
-                {/* Placeholder toggle */}
-                <button className="w-12 h-6 bg-gray-300 dark:bg-gray-600 rounded-full relative">
-                  <span className="absolute top-0 left-0 bg-white dark:bg-gray-300 w-6 h-6 rounded-full shadow transform transition-all"></span>
-                </button>
-              </div>
-            </section>
-
             {/* General Preferences Section */}
             <section className="bg-white dark:bg-[#1D2226] rounded-md shadow p-6">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">

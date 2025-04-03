@@ -6,14 +6,23 @@ import { ObjectId } from "mongodb";
 export default async function handler(req, res) {
   if (req.method === "PUT") {
     const { id } = req.query;
-    // Destructure fields from the request body
-    const { name, summary, pronouns, membership, title, location } = req.body;
+    // Include achievements along with the other fields.
+    const {
+      name,
+      summary,
+      pronouns,
+      membership,
+      title,
+      location,
+      skills,
+      achievements,
+    } = req.body;
 
     try {
       const client = await clientPromise;
       const db = client.db();
 
-      // Build the update object based on provided fields
+      // Build the update object based on provided fields.
       let updateFields = {};
       if (name !== undefined) updateFields.name = name;
       if (summary !== undefined) updateFields.summary = summary;
@@ -21,6 +30,8 @@ export default async function handler(req, res) {
       if (membership !== undefined) updateFields.membership = membership;
       if (title !== undefined) updateFields.title = title;
       if (location !== undefined) updateFields.location = location;
+      if (skills !== undefined) updateFields.skills = skills; // Allow updating skills
+      if (achievements !== undefined) updateFields.achievements = achievements; // Allow updating achievements
 
       if (Object.keys(updateFields).length === 0) {
         return res.status(400).json({ message: "Nothing to update" });
