@@ -798,8 +798,8 @@ export default function ProfilePage({
                     </ul>
                   ) : (
                     <p className="text-gray-600 dark:text-gray-300">
-                      You haven't added any skills yet. Click Edit to add your
-                      skills.
+                      You haven&apos;t added any skills yet. Click Edit to add
+                      your skills.
                     </p>
                   )}
                 </>
@@ -973,8 +973,8 @@ export default function ProfilePage({
                     </ul>
                   ) : (
                     <p className="text-gray-600 dark:text-gray-300">
-                      You haven't added any achievements yet. Click Edit to add
-                      one.
+                      You haven&apos;t added any achievements yet. Click Edit to
+                      add one.
                     </p>
                   )}
                 </>
