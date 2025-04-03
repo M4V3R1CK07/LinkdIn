@@ -275,7 +275,7 @@ export default function MyNetwork({
             </div>
           ) : (
             <p className="text-gray-600 dark:text-gray-300">
-              You haven&apos;st connected with anyone yet.
+              You haven&apos;t connected with anyone yet.
             </p>
           )}
         </div>
