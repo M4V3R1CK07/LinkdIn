@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Header from "../components/Header";
 import { getSession } from "next-auth/react";
+import Head from "next/head";
 
 // You might store a default image URL for users lacking one
 const DEFAULT_USER_IMAGE = "/default-user.png";
@@ -55,6 +56,10 @@ export default function JobPage({ user }) {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-black">
+      <Head>
+        <title>Jobs | LinkdIn</title>
+        <link rel="icon" href="/logos/LinkdIn_Icon.png" />
+      </Head>
       <Header />
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

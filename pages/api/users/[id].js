@@ -6,7 +6,7 @@ import { ObjectId } from "mongodb";
 export default async function handler(req, res) {
   if (req.method === "PUT") {
     const { id } = req.query;
-    // Include achievements along with the other fields.
+    // Include profile image along with other fields
     const {
       name,
       summary,
@@ -16,13 +16,14 @@ export default async function handler(req, res) {
       location,
       skills,
       achievements,
+      profileImage, // Profile picture field
     } = req.body;
 
     try {
       const client = await clientPromise;
       const db = client.db();
 
-      // Build the update object based on provided fields.
+      // Build the update object based on provided fields
       let updateFields = {};
       if (name !== undefined) updateFields.name = name;
       if (summary !== undefined) updateFields.summary = summary;
@@ -32,6 +33,7 @@ export default async function handler(req, res) {
       if (location !== undefined) updateFields.location = location;
       if (skills !== undefined) updateFields.skills = skills; // Allow updating skills
       if (achievements !== undefined) updateFields.achievements = achievements; // Allow updating achievements
+      if (profileImage !== undefined) updateFields.profileImage = profileImage; // Allow updating profile image
 
       if (Object.keys(updateFields).length === 0) {
         return res.status(400).json({ message: "Nothing to update" });

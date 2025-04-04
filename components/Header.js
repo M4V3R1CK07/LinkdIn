@@ -311,23 +311,23 @@ function Header() {
                   </h5>
                   <ul className="mt-2 space-y-1">
                     <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
-                      Hire on LinkedIn: Find, attract and recruit talent
+                      Hire on LinkdIn: Find, attract and recruit talent
                     </li>
                     <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
-                      Sell with LinkedIn: Unlock sales opportunities
+                      Sell with LinkdIn: Unlock sales opportunities
                     </li>
                     <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
                       Post a job for free: Get qualified applicants quickly
                     </li>
                     <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
-                      Advertise on LinkedIn: Acquire customers and grow your
+                      Advertise on LinkdIn: Acquire customers and grow your
                       business
                     </li>
                     <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
                       Get started with Premium: Expand and leverage your network
                     </li>
                     <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
-                      Learn with LinkedIn: Courses to develop your employees
+                      Learn with LinkdIn: Courses to develop your employees
                     </li>
                     <li className="text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 px-2 py-1 rounded">
                       Admin Center: Manage billing and account details

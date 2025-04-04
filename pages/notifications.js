@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Header from "../components/Header";
 import { getSession } from "next-auth/react";
+import Head from "next/head";
 
 export async function getServerSideProps({ req }) {
   const session = await getSession({ req });
@@ -72,6 +73,10 @@ export async function getServerSideProps({ req }) {
 export default function NotificationsPage({ user, notifications }) {
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-black">
+      <Head>
+        <title>Notifications | LinkdIn</title>
+        <link rel="icon" href="/logos/LinkdIn_Icon.png" />
+      </Head>
       <Header />
       <div className="max-w-7xl mx-auto p-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -140,7 +145,10 @@ export default function NotificationsPage({ user, notifications }) {
                 Manage the notifications you receive and adjust your alert
                 preferences.
               </p>
-              <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+              <button
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                onClick={() => (window.location.href = "/settings")}
+              >
                 Manage Settings
               </button>
             </div>

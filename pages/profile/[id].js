@@ -6,6 +6,7 @@ import { useState } from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import Image from "next/image";
 import Link from "next/link";
+import Head from "next/head";
 
 // --------------------------------------------------------------------
 // getServerSideProps: Fetch user data, connections count, skills & achievements
@@ -359,31 +360,127 @@ export default function ProfilePage({
 
   const formattedDate = `${monthNames[selectedMonth]} ${selectedYear}`;
 
+  const [profileImage, setProfileImage] = useState(user.image); // Initial profile image
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false); // Loading indicator during upload
+
+  // Function to update the profile image URL in the database
+  const updateUserProfile = async (imageUrl) => {
+    try {
+      const response = await fetch(`/api/users/${user.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ profileImage: imageUrl }),
+      });
+
+      if (response.ok) {
+        console.log("Profile updated successfully!");
+      } else {
+        console.error("Failed to update profile");
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+  };
+
+  // Function to handle image upload
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+
+    // Validate file size and type
+    if (file.size > 2 * 1024 * 1024) {
+      alert("File size should be less than 2MB.");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload a valid image.");
+      return;
+    }
+
+    setLoading(true); // Show loading indicator
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      // Upload the file to Cloudinary
+      const uploadResponse = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const uploadData = await uploadResponse.json();
+
+      if (uploadResponse.ok) {
+        const newImageUrl = uploadData.url; // Get the uploaded image URL from Cloudinary
+        setProfileImage(newImageUrl); // Update the profile image locally
+        await updateUserProfile(newImageUrl); // Update the database with the new image URL
+        setIsEditing(false); // Exit edit mode
+      } else {
+        alert("Failed to upload the image.");
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("An error occurred while uploading the image.");
+    } finally {
+      setLoading(false); // Hide loading indicator
+    }
+  };
+
   // --------------------------------------------------------------------
   // Render Profile Page – Using existing styling/placement
   // --------------------------------------------------------------------
   return (
     <div className="bg-[#F3F2EF] dark:bg-black dark:text-white h-screen overflow-y-scroll md:space-y-6">
+      <Head>
+        <title>{user.name} | LinkdIn</title>
+        <link rel="icon" href="/logos/LinkdIn_Icon.png" />
+      </Head>
       <Header />
       <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-        {/* Header Background */}
         <div className="relative">
+          {/* Header Background */}
           <div
             className="w-full h-60 bg-cover bg-center"
             style={{
-              backgroundImage:
-                "url('https://via.placeholder.com/1200x400.png?text=Profile+Background')",
+              backgroundImage: "url('')",
             }}
           ></div>
           {/* Profile Image */}
-          <div className="absolute left-8 bottom-0 transform translate-y-1/2">
+          <div
+            className="absolute left-8 bottom-0 transform translate-y-1/2 cursor-pointer"
+            onClick={() => setIsEditing(true)} // Enable editing when clicking the profile image
+          >
             <Image
-              src={user.image}
+              src={profileImage}
               alt={user.name}
               width={128}
               height={128}
-              className="w-32 h-32 rounded-full border-4 border-white"
+              className="w-32 h-32 rounded-full border-4 border-white object-cover"
             />
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                <span className="text-white">Uploading...</span>
+              </div>
+            )}
+            {isEditing && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
+                <label
+                  htmlFor="profileImageUpload"
+                  className="px-4 py-2 bg-blue-600 text-white rounded cursor-pointer hover:bg-blue-700"
+                >
+                  Upload
+                </label>
+                <input
+                  id="profileImageUpload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload} // Trigger the upload process
+                  className="hidden"
+                />
+              </div>
+            )}
           </div>
         </div>
 
@@ -439,11 +536,19 @@ export default function ProfilePage({
             )}
 
             {/* Display connection count */}
-            <Link href="/mynetwork" passHref>
-              <a className="mt-1 text-gray-600 dark:text-gray-300">
+            {isOwnProfile ? (
+              // If it's the signed-in user's profile, render the clickable link
+              <Link href="/mynetwork" passHref>
+                <a className="mt-1 text-blue-600 hover:underline">
+                  Connections: {connectionsCount}
+                </a>
+              </Link>
+            ) : (
+              // If it's another user's profile, render plain text without link
+              <span className="mt-1 text-gray-500">
                 Connections: {connectionsCount}
-              </a>
-            </Link>
+              </span>
+            )}
 
             {isOwnProfile ? (
               <div className="mt-1 flex items-center space-x-2">

@@ -5,6 +5,7 @@ import { useSession, getSession } from "next-auth/react";
 import { ObjectId } from "mongodb";
 import Image from "next/image";
 import { useState } from "react";
+import Head from "next/head";
 
 export async function getServerSideProps({ req }) {
   try {
@@ -229,6 +230,10 @@ export default function MyNetwork({
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-black">
+      <Head>
+        <title>Grow | LinkdIn</title>
+        <link rel="icon" href="/logos/LinkdIn_Icon.png" />
+      </Head>
       <Header />
       <div className="max-w-5xl mx-auto p-6">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
