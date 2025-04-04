@@ -287,7 +287,7 @@ export default function SettingsPage() {
                   </li>
                   <li className="flex justify-between items-center">
                     <span className="text-gray-700 dark:text-gray-300">
-                      Where you're signed in
+                      Where you&apos;re signed in
                     </span>
                     <button className="text-blue-600 hover:underline">
                       View
